@@ -462,7 +462,7 @@ document.getElementById('swapBridge').onclick=()=>{setView(view==='real'?'drawn'
 /* opening move: frame the property + creek */
 const mob=innerWidth<=700;
 map.fitBounds(L.latLngBounds([...DRIVE,...BOUND]).pad(.04),mob?{paddingBottomRight:[0,190]}:{paddingTopLeft:[380,0]});
-setView("3d");
+setTimeout(()=>setView("3d"),300);
 
 
 /* ================= 3D TILT VIEW ================= */
@@ -482,7 +482,7 @@ const P3=[
  {n:'Park Forest camp',c:'#d8c46a',ll:[38.7646,-79.8676],t:'Top of the property · camp + fire · open field.'}
 ];
 const VIEWS=[
- {n:'From the creek, looking uphill',s:'Facing west, up the climb',cam:{center:[-79.8605,38.7655],zoom:15.7,pitch:68,bearing:-80}},
+ {n:'From the creek, looking uphill',s:'Facing west, up the climb',cam:{center:[-79.8605,38.7655],zoom:15.8,pitch:62,bearing:-80}},
  {n:'From the ridge, looking down',s:'Pine Ridge toward the valley',cam:{center:[-79.8600,38.7660],zoom:15.9,pitch:70,bearing:100}},
  {n:'Side profile',s:'Looking north, the whole slope',cam:{center:[-79.8610,38.7660],zoom:15.4,pitch:72,bearing:0}},
  {n:'Whole valley',s:'Wide view of the creek valley',cam:{center:[-79.8560,38.7670],zoom:14.6,pitch:62,bearing:-35}},
@@ -493,7 +493,7 @@ function open3d(){
  if(m3){setTimeout(()=>m3.resize(),20);return;}
  loadLib(()=>{
   const mob=innerWidth<=700, ex=+document.getElementById('ex3').value;
-  m3=new maplibregl.Map({container:'m3d',maxPitch:85,center:VIEWS[0].cam.center,zoom:mob?15.2:VIEWS[0].cam.zoom,pitch:VIEWS[0].cam.pitch,bearing:VIEWS[0].cam.bearing,attributionControl:false,
+  m3=new maplibregl.Map({container:'m3d',maxPitch:mob?70:80,center:VIEWS[0].cam.center,zoom:mob?15.1:VIEWS[0].cam.zoom,pitch:mob?58:VIEWS[0].cam.pitch,bearing:VIEWS[0].cam.bearing,attributionControl:false,
    style:{version:8,
     sources:{
      sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar'},
@@ -503,13 +503,13 @@ function open3d(){
     layers:[{id:'sat',type:'raster',source:'sat',paint:{'raster-saturation':-.05,'raster-contrast':.06}},
             {id:'hs',type:'hillshade',source:'hs',paint:{'hillshade-exaggeration':.25,'hillshade-shadow-color':'#0f2222','hillshade-highlight-color':'#fff6e0','hillshade-illumination-direction':300}}],
     terrain:{source:'dem',exaggeration:ex},
-    sky:{'sky-color':'#7fb2d6','horizon-color':'#dfe9ee','fog-color':'#cfdde3','sky-horizon-blend':.6,'horizon-fog-blend':.6,'fog-ground-blend':.35,'atmosphere-blend':['interpolate',['linear'],['zoom'],10,1,16,.4]}
+    sky:{'sky-color':'#7fb2d6','horizon-color':'#dfe9ee','fog-color':'#cfdde3','sky-horizon-blend':.8,'horizon-fog-blend':.8,'fog-ground-blend':.5,'atmosphere-blend':['interpolate',['linear'],['zoom'],10,1,16,.4]}
    }});
   m3.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
   m3.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
   m3.addControl(new maplibregl.FullscreenControl(),'bottom-right');
   if(mob)m3.setPadding({top:0,left:0,right:0,bottom:180});
-  m3.on('load',()=>{
+  const addOv=()=>{if(m3.getSource('creek'))return;
    m3.addSource('field',{type:'geojson',data:FIELD_GJ});
    m3.addLayer({id:'field',type:'fill',source:'field',paint:{'fill-color':'#d8c46a','fill-opacity':.28}});
    m3.addLayer({id:'fieldl',type:'line',source:'field',paint:{'line-color':'#d8c46a','line-width':2}});
@@ -526,7 +526,8 @@ function open3d(){
     el.innerHTML='<span class="lab">'+p.n+'</span><span class="stem"></span><span class="dot3" style="background:'+p.c+'"></span>';
     new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(LL(p.ll)).setPopup(new maplibregl.Popup({offset:36,closeButton:true}).setHTML('<b>'+p.n+'</b>'+p.t)).addTo(m3);
    });
-  });
+  };
+  if(m3.isStyleLoaded())addOv();else m3.once('style.load',addOv);m3.once('load',addOv);
   m3.on('error',e=>console.warn(e&&e.error));
   ['mousedown','touchstart','wheel'].forEach(ev=>m3.getCanvas().addEventListener(ev,()=>{if(orbiting)stopFly();},{passive:true}));
  });
